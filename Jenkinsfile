@@ -36,14 +36,14 @@ pipeline {
             parallel{
                 stage ('Deploy to Staging'){
                     steps {
-                        cp **/target/*.war /usr/local/tomcat-staging/webapps
+                       sh "cp **/target/*.war /usr/local/tomcat-staging/webapps"
                     }
                 }
 
 
                 stage ("Deploy to Production"){
                     steps {
-                        cp **/target/*.war /usr/local/tomcat-production/webapps
+                        sh "cp **/target/*.war /usr/local/tomcat-production/webapps"
                     }
                 }
             }
