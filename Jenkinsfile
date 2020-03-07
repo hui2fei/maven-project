@@ -1,45 +1,50 @@
 pipeline {
     agent any
+
+
     tools{
         maven 'local maven'
     }
 
-    stages{
+
+    parameters{
+        string(name: 'tomcat_dev', defaultValue: 'localhost', description: 'Staging Server')
+        string(name: 'tomcat_prod', defaultValue: 'localhost', description: 'Production Server')
+    }
+
+
+    triggers {
+         pollSCM('* * * * *')
+     }
+
+
+     stages{
         stage('Build'){
             steps {
                 sh 'mvn clean package'
             }
             post {
                 success {
-                    echo '开始存档....'
+                    echo '开始存档...'
                     archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
         }
-        stage('Deploy to staging'){
-            steps{
-                build job:'deploy-to-staging'
-            }
-        }
 
 
-         stage ('Deploy to Production'){
-            steps{
-                timeout(time:5, unit:'DAYS'){
-                    input message:'是否部署到生产环境?'
+     stage ('Deployments'){
+            parallel{
+                stage ('Deploy to Staging'){
+                    steps {
+                        cp **/target/*.war /usr/local/tomcat-staging/webapps
+                    }
                 }
 
 
-                build job: 'deploy-to-production'
-            }
-            post {
-                success {
-                    echo '代码成功部署到生产环境'
-                }
-
-
-                failure {
-                    echo ' 部署失败'
+                stage ("Deploy to Production"){
+                    steps {
+                        cp **/target/*.war /usr/local/tomcat-production/webapps
+                    }
                 }
             }
         }
